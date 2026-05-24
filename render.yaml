@@ -5,11 +5,10 @@ services:
     rootDir: server
     buildCommand: npm install && npm run build
     startCommand: npm start
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 4000
       - key: MONGODB_URI
         sync: false
       - key: JWT_ACCESS_SECRET
@@ -25,6 +24,8 @@ services:
           name: recruiting-client
           type: web
           property: url
+      - key: CORS_ORIGINS
+        sync: false
 
   - type: web
     name: recruiting-client

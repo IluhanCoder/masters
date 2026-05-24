@@ -17,11 +17,41 @@ import { expireBookings } from './scheduler.js'
 
 export const app = express()
 
-const allowedOrigins = process.env.CLIENT_ORIGIN
-  ? [process.env.CLIENT_ORIGIN, 'http://localhost:5173']
-  : ['http://localhost:5173']
+const parseCsv = (value?: string): string[] =>
+  (value ?? '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
 
-app.use(cors({ origin: allowedOrigins, credentials: true }))
+const allowedOriginSet = new Set<string>([
+  ...parseCsv(process.env.CORS_ORIGINS),
+  ...parseCsv(process.env.CLIENT_ORIGIN),
+])
+
+if (process.env.NODE_ENV !== 'production') {
+  allowedOriginSet.add('http://localhost:5173')
+  allowedOriginSet.add('http://127.0.0.1:5173')
+}
+
+const corsOptions: cors.CorsOptions = {
+  credentials: true,
+  origin: (origin, callback) => {
+    if (!origin) {
+      callback(null, true)
+      return
+    }
+
+    if (allowedOriginSet.has(origin)) {
+      callback(null, true)
+      return
+    }
+
+    callback(new Error(`CORS origin is not allowed: ${origin}`))
+  },
+}
+
+app.use(cors(corsOptions))
+app.options('*', cors(corsOptions))
 app.use(express.json({ limit: '10mb' }))
 
 app.use('/api/auth', authRouter)
