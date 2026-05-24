@@ -60,7 +60,7 @@ export const RecommendationsPage = () => {
           positions={positions}
           isLoading={isLoading}
           emptyText="Немає підходящих кандидатів для ваших позицій"
-          onCandidateClick={(candidate) => void navigate(`/candidates/${candidate.id}`)}
+          onCandidateClick={(candidate) => void navigate(`/masters/${candidate.id}`)}
         />
       </div>
     </div>

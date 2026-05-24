@@ -6,17 +6,21 @@ import { PositionModel } from '../position/position-schema.js'
 import type { ClientDashboard, ManagerDashboard } from './dashboard-types.js'
 
 export const getManagerDashboard = async (): Promise<ManagerDashboard> => {
+  const now = new Date()
+
   const [
     totalCandidates,
-    availableCandidates,
-    leasedCandidates,
+    leasedCandidateIds,
     bookingCounts,
     totalCompanies,
     positionCounts,
   ] = await Promise.all([
     CandidateModel.countDocuments(),
-    CandidateModel.countDocuments({ availability: 'available' }),
-    CandidateModel.countDocuments({ availability: 'leased' }),
+    CandidateBookingModel.distinct('candidateId', {
+      status: 'approved',
+      requestedFrom: { $lte: now },
+      requestedTo: { $gte: now },
+    }),
     CandidateBookingModel.aggregate<{ _id: string; count: number }>([
       { $group: { _id: '$status', count: { $sum: 1 } } },
     ]),
@@ -29,6 +33,8 @@ export const getManagerDashboard = async (): Promise<ManagerDashboard> => {
   const bookingMap = Object.fromEntries(bookingCounts.map((b) => [b._id, b.count]))
   const positionMap = Object.fromEntries(positionCounts.map((p) => [p._id, p.count]))
   const totalBookings = bookingCounts.reduce((sum, b) => sum + b.count, 0)
+  const leasedCandidates = leasedCandidateIds.length
+  const availableCandidates = Math.max(totalCandidates - leasedCandidates, 0)
 
   return {
     candidates: {

@@ -520,7 +520,7 @@ export const CompanyDetailPage = () => {
                   className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
                 >
                   <Link
-                    to={`/candidates/${employee.candidateId}`}
+                    to={`/masters/${employee.candidateId}`}
                     className="font-semibold text-sky-600 hover:underline"
                   >
                     {employee.candidateName}
@@ -563,7 +563,7 @@ export const CompanyDetailPage = () => {
                   className="rounded-2xl border border-slate-200 bg-slate-50 p-4 opacity-80"
                 >
                   <Link
-                    to={`/candidates/${record.candidateId}`}
+                    to={`/masters/${record.candidateId}`}
                     className="font-semibold text-slate-700 hover:underline"
                   >
                     {record.candidateName}

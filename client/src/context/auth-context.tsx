@@ -87,14 +87,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (response.status !== 401) return response
 
-    // Access token rejected — try to refresh
     try {
       const refreshed = await authService.refresh(current.tokens.refreshToken)
       setSession(refreshed)
       return doFetch(refreshed.tokens.accessToken)
     } catch {
       clearSession()
-      return response // caller will see 401
+      return response
     }
   }, [setSession, clearSession])
 

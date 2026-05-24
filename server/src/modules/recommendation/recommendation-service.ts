@@ -1,4 +1,5 @@
 import type { AuthUser } from '../auth/auth-types.js'
+import { CandidateBookingModel } from '../booking/booking-schema.js'
 import { CandidateModel } from '../candidate/candidate-schema.js'
 import { CompanyModel } from '../company/company-schema.js'
 import { PositionModel } from '../position/position-schema.js'
@@ -36,6 +37,22 @@ export const getRecommendations = async (authUser: AuthUser): Promise<Recommende
   }).select('title companyId stack neededFrom neededTo isOpenEndedTerm')
 
   const candidates = await CandidateModel.find({ availability: 'available' }).sort({ createdAt: -1 })
+  const candidateIds = candidates.map((candidate) => candidate._id)
+  const ratingCountAgg = await CandidateBookingModel.aggregate<{ _id: unknown; count: number }>([
+    {
+      $match: {
+        candidateId: { $in: candidateIds },
+        serviceRating: { $exists: true, $ne: null },
+      },
+    },
+    {
+      $group: {
+        _id: '$candidateId',
+        count: { $sum: 1 },
+      },
+    },
+  ])
+  const ratingCountMap = new Map(ratingCountAgg.map((item) => [String(item._id), item.count]))
 
   const results: RecommendedCandidate[] = []
 
@@ -105,6 +122,8 @@ export const getRecommendations = async (authUser: AuthUser): Promise<Recommende
       id: candidate.id,
       fullName: candidate.fullName,
       skills: candidateSkills,
+      rating: Number.isFinite(candidate.rating) ? candidate.rating : 0,
+      ratingCount: ratingCountMap.get(candidate.id) ?? 0,
       availability: candidate.availability,
       availableFrom: candidateFrom ?? new Date(0),
       availableTo: candidateTo,

@@ -1,7 +1,12 @@
-import type { CandidateSummary, CreateCandidatePayload, UpdateCandidatePayload } from './candidate-types'
+import type {
+  CandidateSummary,
+  CreateCandidatePayload,
+  UpdateCandidatePayload,
+  UpdateCandidateRatingPayload,
+} from './candidate-types'
 import { API_BASE } from '../../shared/api-base'
 
-const API_BASE_PATH = `${API_BASE}/api/candidates`
+const API_BASE_PATH = `${API_BASE}/api/masters`
 
 const parseError = async (response: Response): Promise<string> => {
   try {
@@ -55,6 +60,13 @@ export const candidateService = {
 
   update(candidateId: string, payload: UpdateCandidatePayload, accessToken: string) {
     return request<{ candidate: CandidateSummary }>(`/${candidateId}`, accessToken, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    })
+  },
+
+  rate(candidateId: string, payload: UpdateCandidateRatingPayload, accessToken: string) {
+    return request<{ candidate: CandidateSummary }>(`/${candidateId}/rating`, accessToken, {
       method: 'PATCH',
       body: JSON.stringify(payload),
     })

@@ -110,7 +110,7 @@ export const SkillsPage = () => {
   }
 
   if (role !== 'manager') {
-    return <Navigate to="/candidates" replace />
+    return <Navigate to="/masters" replace />
   }
 
   return (

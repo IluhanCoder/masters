@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import { HttpError } from '../../shared/http-error.js'
 import type { AuthUser } from '../auth/auth-types.js'
 import { CandidateBookingModel } from '../booking/booking-schema.js'
@@ -6,6 +7,7 @@ import { CandidateModel } from './candidate-schema.js'
 import type {
   CandidateSummary,
   CreateCandidateRequestBody,
+  UpdateCandidateRatingRequestBody,
   UpdateCandidateRequestBody,
 } from './candidate-types.js'
 
@@ -57,9 +59,35 @@ const getCompletedHiresCompaniesCountByCandidateIds = async (
   )
 }
 
+const getRatingsCountByCandidateIds = async (
+  candidateIds: string[],
+): Promise<Map<string, number>> => {
+  if (!candidateIds.length) {
+    return new Map()
+  }
+
+  const aggregated = await CandidateBookingModel.aggregate<{ _id: mongoose.Types.ObjectId; count: number }>([
+    {
+      $match: {
+        candidateId: { $in: candidateIds.map((id) => new mongoose.Types.ObjectId(id)) },
+        serviceRating: { $exists: true, $ne: null },
+      },
+    },
+    {
+      $group: {
+        _id: '$candidateId',
+        count: { $sum: 1 },
+      },
+    },
+  ])
+
+  return new Map(aggregated.map((item) => [String(item._id), item.count]))
+}
+
 const toSummary = (
   candidate: Awaited<ReturnType<(typeof CandidateModel)['findOne']>>,
   completedHiresCompaniesCount = 0,
+  ratingCount = 0,
 ): CandidateSummary => {
   if (!candidate) {
     throw new HttpError(404, 'Candidate not found')
@@ -73,6 +101,8 @@ const toSummary = (
     cvPdfDataUrl: candidate.cvPdfDataUrl,
     completedHiresCompaniesCount,
     skills: candidate.skills,
+    rating: candidate.rating,
+    ratingCount,
     availability: candidate.availability,
     availableFrom: candidate.availableFrom,
     availableTo: candidate.availableTo,
@@ -87,11 +117,18 @@ export const listCandidates = async (authUser: AuthUser): Promise<CandidateSumma
       : {}
 
   const candidates = await CandidateModel.find(query).sort({ createdAt: -1 })
-  const completedHiresCompaniesCountByCandidateId =
-    await getCompletedHiresCompaniesCountByCandidateIds(candidates.map((candidate) => candidate.id))
+  const candidateIds = candidates.map((candidate) => candidate.id)
+  const [completedHiresCompaniesCountByCandidateId, ratingCountByCandidateId] = await Promise.all([
+    getCompletedHiresCompaniesCountByCandidateIds(candidateIds),
+    getRatingsCountByCandidateIds(candidateIds),
+  ])
 
   return candidates.map((candidate) =>
-    toSummary(candidate, completedHiresCompaniesCountByCandidateId.get(candidate.id) ?? 0),
+    toSummary(
+      candidate,
+      completedHiresCompaniesCountByCandidateId.get(candidate.id) ?? 0,
+      ratingCountByCandidateId.get(candidate.id) ?? 0,
+    ),
   )
 }
 
@@ -108,10 +145,17 @@ export const getCandidateById = async (
       : { _id: candidateId }
 
   const candidate = await CandidateModel.findOne(query)
-  const completedHiresCompaniesCountByCandidateId =
-    await getCompletedHiresCompaniesCountByCandidateIds(candidate ? [candidate.id] : [])
+  const candidateIds = candidate ? [candidate.id] : []
+  const [completedHiresCompaniesCountByCandidateId, ratingCountByCandidateId] = await Promise.all([
+    getCompletedHiresCompaniesCountByCandidateIds(candidateIds),
+    getRatingsCountByCandidateIds(candidateIds),
+  ])
 
-  return toSummary(candidate, completedHiresCompaniesCountByCandidateId.get(candidate?.id ?? '') ?? 0)
+  return toSummary(
+    candidate,
+    completedHiresCompaniesCountByCandidateId.get(candidate?.id ?? '') ?? 0,
+    ratingCountByCandidateId.get(candidate?.id ?? '') ?? 0,
+  )
 }
 
 export const createCandidate = async (
@@ -177,7 +221,7 @@ export const createCandidate = async (
     createdBy: authUser.id,
   })
 
-  return toSummary(createdCandidate, 0)
+  return toSummary(createdCandidate, 0, 0)
 }
 
 export const updateCandidate = async (
@@ -247,8 +291,43 @@ export const updateCandidate = async (
 
   await candidate.save()
 
-  const completedHiresCompaniesCountByCandidateId =
-    await getCompletedHiresCompaniesCountByCandidateIds([candidate.id])
+  const [completedHiresCompaniesCountByCandidateId, ratingCountByCandidateId] = await Promise.all([
+    getCompletedHiresCompaniesCountByCandidateIds([candidate.id]),
+    getRatingsCountByCandidateIds([candidate.id]),
+  ])
 
-  return toSummary(candidate, completedHiresCompaniesCountByCandidateId.get(candidate.id) ?? 0)
+  return toSummary(
+    candidate,
+    completedHiresCompaniesCountByCandidateId.get(candidate.id) ?? 0,
+    ratingCountByCandidateId.get(candidate.id) ?? 0,
+  )
+}
+
+export const updateCandidateRating = async (
+  candidateId: string,
+  payload: UpdateCandidateRatingRequestBody,
+): Promise<CandidateSummary> => {
+  const candidate = await CandidateModel.findById(candidateId)
+  if (!candidate) {
+    throw new HttpError(404, 'Candidate not found')
+  }
+
+  const rating = Number(payload.rating)
+  if (!Number.isFinite(rating) || rating < 0 || rating > 5) {
+    throw new HttpError(400, 'rating must be a number in range 0..5')
+  }
+
+  candidate.rating = Math.round(rating * 10) / 10
+  await candidate.save()
+
+  const [completedHiresCompaniesCountByCandidateId, ratingCountByCandidateId] = await Promise.all([
+    getCompletedHiresCompaniesCountByCandidateIds([candidate.id]),
+    getRatingsCountByCandidateIds([candidate.id]),
+  ])
+
+  return toSummary(
+    candidate,
+    completedHiresCompaniesCountByCandidateId.get(candidate.id) ?? 0,
+    ratingCountByCandidateId.get(candidate.id) ?? 0,
+  )
 }

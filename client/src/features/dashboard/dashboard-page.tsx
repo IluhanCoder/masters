@@ -101,9 +101,9 @@ export const DashboardPage = () => {
   }, [accessToken])
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.22),_transparent_40%),linear-gradient(145deg,_#f8fafc_0%,_#e2e8f0_100%)] px-6 py-10">
+    <main className="marketplace-bg px-6 py-10">
       <section className="mx-auto max-w-5xl space-y-8">
-        <AppNav title="Дашборд" />
+        <AppNav title="Огляд платформи" />
 
         {error ? (
           <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
@@ -154,15 +154,15 @@ const ManagerStats = ({ data }: { data: ManagerDashboard }) => {
     <div className="space-y-6">
       {}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="Кандидатів" value={data.candidates.total} color="slate" to="/candidates" />
-        <StatCard label="Вільні" value={data.candidates.available} color="emerald" to="/candidates" />
-        <StatCard label="Бронювань" value={data.bookings.total} color="sky" to="/bookings" />
+        <StatCard label="Майстрів" value={data.candidates.total} color="slate" to="/masters" />
+        <StatCard label="Вільні" value={data.candidates.available} color="emerald" to="/masters" />
+        <StatCard label="Замовлень" value={data.bookings.total} color="sky" to="/orders" />
         <StatCard label="Компаній" value={data.companies.total} color="violet" to="/companies/all" />
       </div>
 
       {}
       <div className="grid gap-6 lg:grid-cols-2">
-        <ChartCard title="Кандидати — доступність">
+        <ChartCard title="Майстри — доступність">
           {candidatePieData.length === 0 ? (
             <p className="py-8 text-center text-sm text-slate-400">Немає даних</p>
           ) : (
@@ -188,7 +188,7 @@ const ManagerStats = ({ data }: { data: ManagerDashboard }) => {
           )}
         </ChartCard>
 
-        <ChartCard title="Позиції — статус">
+        <ChartCard title="Категорії робіт — статус">
           {positionsPieData.length === 0 ? (
             <p className="py-8 text-center text-sm text-slate-400">Немає даних</p>
           ) : (
@@ -215,9 +215,9 @@ const ManagerStats = ({ data }: { data: ManagerDashboard }) => {
         </ChartCard>
       </div>
 
-      <ChartCard title="Бронювання за статусами">
+      <ChartCard title="Замовлення за статусами">
         {bookingsBarData.length === 0 ? (
-          <p className="py-8 text-center text-sm text-slate-400">Немає бронювань</p>
+          <p className="py-8 text-center text-sm text-slate-400">Немає замовлень</p>
         ) : (
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={bookingsBarData} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
@@ -259,13 +259,13 @@ const ClientStats = ({ data }: { data: ClientDashboard }) => {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="Компаній" value={data.companies.total} color="violet" to="/companies" />
         <StatCard label="Відкритих позицій" value={data.positions.open} color="sky" to="/companies" />
-        <StatCard label="Запитів" value={data.bookings.total} color="slate" to="/my-bookings" />
-        <StatCard label="Активних" value={data.bookings.approved} color="emerald" to="/my-bookings" />
+        <StatCard label="Замовлень" value={data.bookings.total} color="slate" to="/my-orders" />
+        <StatCard label="Активних" value={data.bookings.approved} color="emerald" to="/my-orders" />
       </div>
 
       {}
       <div className="grid gap-6 lg:grid-cols-2">
-        <ChartCard title="Мої запити — статуси">
+        <ChartCard title="Мої замовлення — статуси">
           {bookingsPieData.length === 0 ? (
             <p className="py-8 text-center text-sm text-slate-400">Немає запитів</p>
           ) : (

@@ -5,6 +5,7 @@ import { useAuth } from '../../context/auth-context'
 import { API_BASE } from '../../shared/api-base'
 import { AppNav } from '../../shared/app-nav'
 import { Modal } from '../../shared/modal'
+import { candidateService } from '../candidate/candidate-service'
 import { bookingService } from './booking-service'
 import type { BookingStatus, CandidateBookingDetails } from './booking-types'
 
@@ -50,12 +51,12 @@ export const BookingRequestsPage = () => {
   const accessToken = authData!.tokens.accessToken
 
   const [bookings, setBookings] = useState<CandidateBookingDetails[]>([])
+  const [ratingsByCandidateId, setRatingsByCandidateId] = useState<Record<string, number>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<BookingStatus | 'all'>('all')
   const [search, setSearch] = useState('')
 
-  // Action modal state
   const [actionType, setActionType] = useState<ActionType | null>(null)
   const [actionBookingId, setActionBookingId] = useState<string | null>(null)
   const [managerComment, setManagerComment] = useState('')
@@ -66,8 +67,14 @@ export const BookingRequestsPage = () => {
     setError(null)
     setIsLoading(true)
     try {
-      const response = await bookingService.list(accessToken)
-      setBookings(response.bookings)
+      const [bookingResponse, candidateResponse] = await Promise.all([
+        bookingService.list(accessToken),
+        candidateService.list(accessToken),
+      ])
+      setBookings(bookingResponse.bookings)
+      setRatingsByCandidateId(
+        Object.fromEntries(candidateResponse.candidates.map((candidate) => [candidate.id, candidate.rating])),
+      )
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Помилка завантаження запитів')
     } finally {
@@ -124,7 +131,7 @@ export const BookingRequestsPage = () => {
   }
 
   const handleSuggestAnother = (bookingId: string, candidateId: string) => {
-    void navigate(`/candidates?suggestFor=${bookingId}&excludeCandidate=${candidateId}`)
+    void navigate(`/masters?suggestFor=${bookingId}&excludeCandidate=${candidateId}`)
   }
 
   const [isExpiring, setIsExpiring] = useState(false)
@@ -158,9 +165,13 @@ export const BookingRequestsPage = () => {
   const actionBooking = bookings.find((b) => b.id === actionBookingId)
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.22),_transparent_40%),linear-gradient(145deg,_#f8fafc_0%,_#e2e8f0_100%)] px-6 py-10">
+    <main className="marketplace-bg px-6 py-10">
       <section className="mx-auto max-w-5xl space-y-6">
-        <AppNav title="Запити на бронювання" />
+        <AppNav title="Менеджер співпраці" />
+
+        <div className="rounded-2xl border border-[#e6dcc8] bg-[linear-gradient(120deg,_#fff6e8_0%,_#fffdfa_100%)] px-5 py-4 text-sm text-[#6b5e4d] shadow-sm">
+          Панель для поєднання клієнтських замовлень з майстрами: керуйте статусами і контролюйте рейтинг, який формується з оцінок клієнтів за завершені послуги.
+        </div>
 
         {import.meta.env.DEV ? (
           <div className="flex items-center gap-3 rounded-2xl border border-dashed border-amber-300 bg-amber-50 px-4 py-3">
@@ -188,7 +199,7 @@ export const BookingRequestsPage = () => {
           </svg>
           <input
             type="text"
-            placeholder="Пошук за кандидатом, позицією або компанією..."
+            placeholder="Пошук за майстром, послугою або клієнтом..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-transparent text-sm text-slate-700 placeholder-slate-400 outline-none"
@@ -205,7 +216,6 @@ export const BookingRequestsPage = () => {
           ) : null}
         </div>
 
-        {/* Status filter tabs */}
         <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
           {STATUS_FILTERS.map(({ key, label }) => (
             <button
@@ -230,10 +240,9 @@ export const BookingRequestsPage = () => {
           ))}
         </div>
 
-        {/* Bookings list */}
         {isLoading ? (
           <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <p className="text-sm text-slate-500">Завантажуємо запити...</p>
+            <p className="text-sm text-slate-500">Завантажуємо замовлення...</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
@@ -241,8 +250,8 @@ export const BookingRequestsPage = () => {
               {query
                 ? `Нічого не знайдено за запитом «${search.trim()}».`
                 : filter === 'all'
-                  ? 'Запитів на бронювання ще немає.'
-                  : 'Немає запитів з таким статусом.'}
+                  ? 'Карток замовлень ще немає.'
+                  : 'Немає замовлень з таким статусом.'}
             </p>
           </div>
         ) : (
@@ -252,20 +261,19 @@ export const BookingRequestsPage = () => {
                 key={booking.id}
                 className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
               >
-                {/* Top row: candidate + position + company */}
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-                      <span>Кандидат:</span>
+                      <span>Майстер:</span>
                       <Link
-                        to={`/candidates/${booking.candidateId}`}
+                        to={`/masters/${booking.candidateId}`}
                         className="font-semibold text-sky-600 hover:underline"
                       >
                         {booking.candidateName}
                       </Link>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-                      <span>Посада:</span>
+                      <span>Послуга:</span>
                       <span className="font-medium text-slate-900">
                         {booking.positionTitle}
                         {booking.positionSeniority
@@ -274,7 +282,7 @@ export const BookingRequestsPage = () => {
                       </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-                      <span>Компанія:</span>
+                      <span>Клієнт:</span>
                       <Link
                         to={`/companies/${booking.companyId}`}
                         className="font-semibold text-sky-600 hover:underline"
@@ -291,7 +299,6 @@ export const BookingRequestsPage = () => {
                   </span>
                 </div>
 
-                {/* Dates + hours */}
                 <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-600">
                   <span>
                     <span className="text-slate-400">Дати: </span>
@@ -308,7 +315,6 @@ export const BookingRequestsPage = () => {
                   </span>
                 </div>
 
-                {/* Client comment */}
                 {booking.comment ? (
                   <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
                     <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
@@ -318,7 +324,6 @@ export const BookingRequestsPage = () => {
                   </div>
                 ) : null}
 
-                {/* Manager comment */}
                 {booking.managerComment ? (
                   <div className="mt-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
                     <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-sky-400">
@@ -328,7 +333,20 @@ export const BookingRequestsPage = () => {
                   </div>
                 ) : null}
 
-                {/* Action buttons */}
+                <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    Рейтинг майстра
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-lg border border-amber-200 bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
+                      Формується з оцінок клієнтів
+                    </span>
+                    <span className="ml-1 text-sm font-semibold text-slate-700">
+                      {(ratingsByCandidateId[booking.candidateId] ?? 0).toFixed(1)} / 5
+                    </span>
+                  </div>
+                </div>
+
                 {booking.status === 'new' ? (
                   <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
                     {booking.originalCandidateId ? (
@@ -356,7 +374,7 @@ export const BookingRequestsPage = () => {
                       onClick={() => handleSuggestAnother(booking.id, booking.candidateId)}
                       className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                     >
-                      Запропонувати іншого кандидата
+                      Запропонувати іншого майстра
                     </button>
                   </div>
                 ) : null}
@@ -366,14 +384,13 @@ export const BookingRequestsPage = () => {
         )}
       </section>
 
-      {/* Approve / Reject modal */}
       <Modal
         isOpen={actionType !== null}
         onClose={closeActionModal}
         title={
           actionType === 'approve'
-            ? `Затвердити бронювання — ${actionBooking?.candidateName ?? ''}`
-            : `Відхилити бронювання — ${actionBooking?.candidateName ?? ''}`
+            ? `Підтвердити замовлення — ${actionBooking?.candidateName ?? ''}`
+            : `Відхилити замовлення — ${actionBooking?.candidateName ?? ''}`
         }
       >
         <div className="space-y-4">

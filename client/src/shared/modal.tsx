@@ -35,14 +35,12 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       aria-modal="true"
       aria-labelledby="modal-title"
     >
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Panel */}
       <div className={`relative w-full rounded-3xl border border-slate-200 bg-white shadow-2xl ${size === 'xl' ? 'max-w-4xl' : 'max-w-md'}`}>
         <div className="sticky top-0 z-10 rounded-t-3xl bg-white px-6 pb-4 pt-6">
         <div className="flex items-start justify-between gap-4">

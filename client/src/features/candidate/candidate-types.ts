@@ -8,6 +8,8 @@ export interface CandidateSummary {
   cvPdfDataUrl?: string
   completedHiresCompaniesCount: number
   skills: string[]
+  rating: number
+  ratingCount: number
   availability: CandidateAvailability
   availableFrom: string
   availableTo?: string
@@ -27,3 +29,7 @@ export interface CreateCandidatePayload {
 }
 
 export type UpdateCandidatePayload = CreateCandidatePayload
+
+export interface UpdateCandidateRatingPayload {
+  rating: number
+}

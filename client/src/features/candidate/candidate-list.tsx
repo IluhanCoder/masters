@@ -11,7 +11,7 @@ export const CandidateList = ({ candidates, isLoading, onCandidateClick }: Candi
   if (isLoading) {
     return (
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm text-slate-500">Завантажуємо список кандидатів...</p>
+        <p className="text-sm text-slate-500">Завантажуємо список майстрів...</p>
       </div>
     )
   }
@@ -21,7 +21,7 @@ export const CandidateList = ({ candidates, isLoading, onCandidateClick }: Candi
       <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-6 text-center shadow-sm">
         <h3 className="text-lg font-semibold text-slate-900">Список порожній</h3>
         <p className="mt-2 text-sm text-slate-600">
-          Додайте першого кандидата через кнопку "Додати кандидата".
+          Додайте першого майстра через кнопку "Додати майстра".
         </p>
       </div>
     )
@@ -37,7 +37,7 @@ export const CandidateList = ({ candidates, isLoading, onCandidateClick }: Candi
           footer={(
             <>
               <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-                Навички
+                Послуги
               </p>
               <div className="flex flex-wrap gap-2">
                 {candidate.skills.map((skill) => (

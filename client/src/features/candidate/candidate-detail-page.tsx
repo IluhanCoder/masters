@@ -56,7 +56,7 @@ const WorkHistory = ({
 
   return (
     <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h3 className="text-lg font-semibold text-slate-900">Зайнятість</h3>
+      <h3 className="text-lg font-semibold text-slate-900">Зайнятість майстра</h3>
 
       {current.length > 0 ? (
         <div className="space-y-2">
@@ -80,7 +80,7 @@ const WorkHistory = ({
 
       {history.length > 0 ? (
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Історія найму</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Історія замовлень</p>
           <ul className="space-y-2">
             {history.map((b) => (
               <li key={b.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
@@ -119,15 +119,15 @@ const formatAvailabilityTerm = (candidate: CandidateSummary) => {
   const from = new Date(candidate.availableFrom).toLocaleDateString('uk-UA')
 
   if (candidate.isOpenEndedAvailability) {
-    return `Термін роботи: з ${from}, невизначений`
+    return `Період доступності: з ${from}, без фінальної дати`
   }
 
   if (!candidate.availableTo) {
-    return `Термін роботи: з ${from}`
+    return `Період доступності: з ${from}`
   }
 
   const to = new Date(candidate.availableTo).toLocaleDateString('uk-UA')
-  return `Термін роботи: ${from} - ${to}`
+  return `Період доступності: ${from} - ${to}`
 }
 
 const getInitials = (fullName: string) =>
@@ -186,14 +186,6 @@ export const CandidateDetailPage = () => {
     void loadCandidate()
   }, [loadCandidate])
 
-  const skillsTitle = useMemo(() => {
-    if (!candidate) {
-      return 'Навички'
-    }
-
-    return `Навички (${candidate.skills.length})`
-  }, [candidate])
-
   const completedHiresCompaniesCount = useMemo(() => {
     if (!candidate) {
       return 0
@@ -232,19 +224,19 @@ export const CandidateDetailPage = () => {
   }
 
   if (!candidateId) {
-    return <Navigate to="/candidates" replace />
+    return <Navigate to="/masters" replace />
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.22),_transparent_40%),linear-gradient(145deg,_#f8fafc_0%,_#e2e8f0_100%)] px-6 py-10">
+    <main className="marketplace-bg px-6 py-10">
       <section className="mx-auto max-w-5xl space-y-6">
         <AppNav
-          title={candidate ? candidate.fullName : 'Кандидат'}
+          title={candidate ? candidate.fullName : 'Профіль майстра'}
           actions={
             <button
               type="button"
-              onClick={() => void navigate('/candidates')}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+              onClick={() => void navigate('/masters')}
+              className="rounded-xl border border-[#d9d3c5] bg-[#fffdf8] px-4 py-2 text-sm font-semibold text-[#5d5348] transition hover:bg-[#f7efdd]"
             >
               Назад до списку
             </button>
@@ -274,7 +266,7 @@ export const CandidateDetailPage = () => {
                     )}
                   </div>
                   <div>
-                    <p className="text-sm uppercase tracking-[0.24em] text-slate-500">Профіль кандидата</p>
+                    <p className="text-sm uppercase tracking-[0.24em] text-slate-500">Профіль майстра</p>
                     <h2 className="mt-2 text-2xl font-semibold text-slate-950">{candidate.fullName}</h2>
                   </div>
                 </div>
@@ -290,6 +282,14 @@ export const CandidateDetailPage = () => {
                 <p className="mt-1 text-sm text-slate-800">{formatAvailabilityTerm(candidate)}</p>
               </div>
 
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm text-amber-700">Рейтинг майстра</p>
+                <p className="mt-1 text-xl font-semibold text-amber-900">{candidate.rating.toFixed(1)} / 5</p>
+                <p className="mt-1 text-xs text-amber-800">
+                  На основі оцінок: <span className="font-semibold">{candidate.ratingCount}</span>
+                </p>
+              </div>
+
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-sm text-slate-500">Завершених наймів</p>
                 <p className="mt-1 text-sm font-semibold text-slate-900">
@@ -300,7 +300,7 @@ export const CandidateDetailPage = () => {
 
             <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold text-slate-900">{skillsTitle}</h3>
+                <h3 className="text-lg font-semibold text-slate-900">Послуги ({candidate.skills.length})</h3>
                 <button
                   type="button"
                   onClick={() => void loadCandidate()}
@@ -334,7 +334,7 @@ export const CandidateDetailPage = () => {
 
         {role === 'manager' && candidate && (candidate.resumeText || candidate.cvPdfDataUrl) ? (
           <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-slate-900">Резюме</h3>
+            <h3 className="text-lg font-semibold text-slate-900">Опис досвіду</h3>
 
             {candidate.cvPdfDataUrl ? (
               <a
@@ -373,10 +373,10 @@ export const CandidateDetailPage = () => {
           <div className="flex justify-center">
             <button
               type="button"
-              onClick={() => void navigate(`/candidates/${candidate.id}/book`)}
+              onClick={() => void navigate(`/masters/${candidate.id}/book`)}
               className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-500"
             >
-              Забронювати
+              Створити замовлення
             </button>
           </div>
         ) : null}
@@ -384,7 +384,7 @@ export const CandidateDetailPage = () => {
         <Modal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          title="Редагувати кандидата"
+          title="Редагувати профіль майстра"
           size="xl"
         >
           {candidate ? (

@@ -52,6 +52,7 @@ export const MyBookingsPage = () => {
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<BookingStatus | 'all'>('all')
   const [respondingId, setRespondingId] = useState<string | null>(null)
+  const [ratingBookingId, setRatingBookingId] = useState<string | null>(null)
   const [respondError, setRespondError] = useState<string | null>(null)
 
   const loadBookings = useCallback(async () => {
@@ -95,13 +96,39 @@ export const MyBookingsPage = () => {
     }
   }
 
+  const handleRate = async (bookingId: string, rating: number) => {
+    setRespondError(null)
+    setRatingBookingId(bookingId)
+    try {
+      const result = await bookingService.rate(bookingId, { rating }, accessToken)
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id === bookingId
+            ? {
+                ...b,
+                serviceRating: result.booking.serviceRating,
+                serviceReview: result.booking.serviceReview,
+                ratedAt: result.booking.ratedAt,
+                ratedById: result.booking.ratedById,
+                status: result.booking.status,
+              }
+            : b,
+        ),
+      )
+    } catch (requestError) {
+      setRespondError(requestError instanceof Error ? requestError.message : 'Помилка оцінювання')
+    } finally {
+      setRatingBookingId(null)
+    }
+  }
+
   const filtered =
     filter === 'all' ? bookings : bookings.filter((booking) => booking.status === filter)
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.22),_transparent_40%),linear-gradient(145deg,_#f8fafc_0%,_#e2e8f0_100%)] px-6 py-10">
+    <main className="marketplace-bg px-6 py-10">
       <section className="mx-auto max-w-4xl space-y-6">
-        <AppNav title="Мої запити" />
+        <AppNav title="Мої замовлення" />
 
         {error ? (
           <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -137,12 +164,12 @@ export const MyBookingsPage = () => {
         {}
         {isLoading ? (
           <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <p className="text-sm text-slate-500">Завантажуємо запити...</p>
+            <p className="text-sm text-slate-500">Завантажуємо замовлення...</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
             <p className="text-slate-500">
-              {filter === 'all' ? 'Запитів на бронювання ще немає.' : 'Немає запитів з таким статусом.'}
+              {filter === 'all' ? 'Замовлень ще немає.' : 'Немає замовлень з таким статусом.'}
             </p>
           </div>
         ) : (
@@ -152,11 +179,10 @@ export const MyBookingsPage = () => {
                 key={booking.id}
                 className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
               >
-                {}
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-                      <span>Посада:</span>
+                      <span>Послуга:</span>
                       <span className="font-medium text-slate-900">
                         {booking.positionTitle}
                         {booking.positionSeniority
@@ -165,7 +191,7 @@ export const MyBookingsPage = () => {
                       </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-                      <span>Компанія:</span>
+                      <span>Клієнтська компанія:</span>
                       <Link
                         to={`/companies/${booking.companyId}`}
                         className="font-semibold text-sky-600 hover:underline"
@@ -182,11 +208,9 @@ export const MyBookingsPage = () => {
                   </span>
                 </div>
 
-                {/* Candidate section */}
                 <div className="mt-4 space-y-2">
                   {hasSuggestion(booking) ? (
                     <>
-                      {/* Counter-proposal banner */}
                       <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
                         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-500">
                           Зустрічна пропозиція від менеджера
@@ -195,7 +219,7 @@ export const MyBookingsPage = () => {
                           <div>
                             <span className="text-slate-500">Ви запитували: </span>
                             <Link
-                              to={`/candidates/${booking.originalCandidateId}`}
+                              to={`/masters/${booking.originalCandidateId}`}
                               className="font-semibold text-slate-700 hover:underline line-through decoration-slate-400"
                             >
                               {booking.originalCandidateName}
@@ -205,7 +229,7 @@ export const MyBookingsPage = () => {
                           <div>
                             <span className="text-slate-500">Пропонується: </span>
                             <Link
-                              to={`/candidates/${booking.candidateId}`}
+                              to={`/masters/${booking.candidateId}`}
                               className="font-semibold text-amber-700 hover:underline"
                             >
                               {booking.candidateName}
@@ -234,9 +258,9 @@ export const MyBookingsPage = () => {
                     </>
                   ) : (
                     <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-                      <span>Кандидат:</span>
+                      <span>Майстер:</span>
                       <Link
-                        to={`/candidates/${booking.candidateId}`}
+                        to={`/masters/${booking.candidateId}`}
                         className="font-semibold text-sky-600 hover:underline"
                       >
                         {booking.candidateName}
@@ -279,6 +303,43 @@ export const MyBookingsPage = () => {
                       Коментар менеджера
                     </p>
                     {booking.managerComment}
+                  </div>
+                ) : null}
+
+                {(booking.status === 'completed' || booking.status === 'approved') ? (
+                  <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-600">
+                      Оцінка виконаної послуги
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {[1, 2, 3, 4, 5].map((value) => {
+                        const currentRating = booking.serviceRating ?? 0
+                        const isActive = currentRating >= value
+                        return (
+                          <button
+                            key={`${booking.id}-client-rating-${value}`}
+                            type="button"
+                            onClick={() => void handleRate(booking.id, value)}
+                            disabled={ratingBookingId === booking.id}
+                            className={`rounded-lg border px-2 py-1 text-xs font-semibold transition ${
+                              isActive
+                                ? 'border-amber-400 bg-amber-200 text-amber-900'
+                                : 'border-amber-300 bg-white text-amber-700 hover:bg-amber-100'
+                            } disabled:opacity-60`}
+                          >
+                            {value}
+                          </button>
+                        )
+                      })}
+                      <span className="ml-1 text-sm font-semibold text-amber-900">
+                        {(booking.serviceRating ?? 0).toFixed(1)} / 5
+                      </span>
+                    </div>
+                    {booking.ratedAt ? (
+                      <p className="mt-2 text-xs text-amber-800">
+                        Останнє оновлення оцінки: {new Date(booking.ratedAt).toLocaleDateString('uk-UA')}
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
               </article>

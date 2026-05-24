@@ -8,6 +8,12 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "check": "tsc --noEmit -p tsconfig.json",
+    "migrate:master-skills": "tsx src/migrate-master-skills.ts",
+    "migrate:master-categories": "tsx src/migrate-master-categories.ts",
+    "migrate:master-descriptions": "tsx src/migrate-master-descriptions.ts",
+    "migrate:master-ratings": "tsx src/migrate-master-ratings.ts",
+    "migrate:normalize-seniority": "tsx src/migrate-normalize-seniority.ts",
+    "migrate:chat-dialogs": "tsx src/migrate-chat-dialogs-to-masters.ts",
     "build:full": "cd ../client && npm install && npm run build && cd ../server && npm install && npm run build"
   },
   "keywords": [],

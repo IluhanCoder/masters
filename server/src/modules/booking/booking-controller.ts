@@ -4,6 +4,7 @@ import { HttpError } from '../../shared/http-error.js'
 import * as bookingService from './booking-service.js'
 import type {
   CreateCandidateBookingRequestBody,
+  RateBookingRequestBody,
   RespondToBookingRequestBody,
   UpdateCandidateBookingRequestBody,
 } from './booking-types.js'
@@ -105,6 +106,24 @@ export const respond = async (
       request.body,
       authUser,
     )
+    response.json({ booking })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const rate = async (
+  request: Request<{ bookingId: string }, unknown, RateBookingRequestBody>,
+  response: Response,
+  next: NextFunction,
+) => {
+  try {
+    const authUser = response.locals.authUser
+    if (!authUser) {
+      throw new HttpError(401, 'Unauthorized')
+    }
+
+    const booking = await bookingService.rateBooking(request.params.bookingId, request.body, authUser)
     response.json({ booking })
   } catch (error) {
     next(error)

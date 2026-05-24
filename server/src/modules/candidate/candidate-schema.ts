@@ -10,6 +10,7 @@ export interface Candidate {
   resumeText?: string
   cvPdfDataUrl?: string
   skills: string[]
+  rating: number
   availability: CandidateAvailability
   availableFrom: Date
   availableTo?: Date
@@ -36,6 +37,7 @@ const candidateSchema = new Schema<Candidate>(
         message: 'At least one skill is required',
       },
     },
+    rating: { type: Number, min: 0, max: 5, default: 0 },
     availability: { type: String, enum: CANDIDATE_AVAILABILITY, default: 'available' },
     availableFrom: { type: Date, required: true },
     availableTo: { type: Date },

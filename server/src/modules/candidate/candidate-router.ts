@@ -9,3 +9,4 @@ candidateRouter.get('/', authenticate, authorizeRoles('manager', 'client'), cand
 candidateRouter.get('/:candidateId', authenticate, authorizeRoles('manager', 'client'), candidateController.getById)
 candidateRouter.post('/', authenticate, authorizeRoles('manager'), candidateController.create)
 candidateRouter.patch('/:candidateId', authenticate, authorizeRoles('manager'), candidateController.update)
+candidateRouter.patch('/:candidateId/rating', authenticate, authorizeRoles('manager'), candidateController.updateRating)

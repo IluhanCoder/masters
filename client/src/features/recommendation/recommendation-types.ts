@@ -9,6 +9,8 @@ export interface RecommendedCandidate {
   id: string
   fullName: string
   skills: string[]
+  rating: number
+  ratingCount: number
   availability: 'available' | 'leased'
   availableFrom: string
   availableTo?: string

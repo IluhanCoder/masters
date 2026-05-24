@@ -14,15 +14,15 @@ const availabilityStyles: Record<CandidateSummary['availability'], string> = {
 }
 
 const availabilityText: Record<CandidateSummary['availability'], string> = {
-  available: 'Доступний',
-  leased: 'В оренді',
+  available: 'Вільний майстер',
+  leased: 'Зайнятий на обʼєкті',
 }
 
 const formatAvailabilityTerm = (candidate: CandidateSummary) => {
   const from = new Date(candidate.availableFrom).toLocaleDateString('uk-UA')
 
   if (candidate.isOpenEndedAvailability) {
-    return `Доступний: з ${from}, на невизначений термін`
+    return `Доступний: з ${from}, без обмеження по даті`
   }
 
   if (!candidate.availableTo) {
@@ -43,6 +43,8 @@ const getInitials = (fullName: string) =>
 
 export const CandidateCard = ({ candidate, onCandidateClick, footer }: CandidateCardProps) => {
   const isClickable = Boolean(onCandidateClick)
+  const safeRating = Number.isFinite(candidate.rating) ? candidate.rating : 0
+  const safeRatingCount = Number.isFinite(candidate.ratingCount) ? candidate.ratingCount : 0
 
   const handleCardClick = () => {
     onCandidateClick?.(candidate)
@@ -64,7 +66,7 @@ export const CandidateCard = ({ candidate, onCandidateClick, footer }: Candidate
       tabIndex={isClickable ? 0 : undefined}
       onClick={isClickable ? handleCardClick : undefined}
       onKeyDown={isClickable ? handleCardKeyDown : undefined}
-      aria-label={isClickable ? `Відкрити профіль кандидата ${candidate.fullName}` : undefined}
+      aria-label={isClickable ? `Відкрити профіль майстра ${candidate.fullName}` : undefined}
     >
       <div className="space-y-4">
         <span
@@ -93,7 +95,13 @@ export const CandidateCard = ({ candidate, onCandidateClick, footer }: Candidate
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Доступність</p>
           <p className="mt-2 text-sm leading-6 text-slate-700">{formatAvailabilityTerm(candidate)}</p>
           <p className="mt-3 text-xs font-medium text-slate-600">
-            Завершених наймів: <span className="font-semibold text-slate-900">{candidate.completedHiresCompaniesCount}</span>
+            Завершених замовлень: <span className="font-semibold text-slate-900">{candidate.completedHiresCompaniesCount}</span>
+          </p>
+          <p className="mt-2 text-xs font-medium text-slate-600">
+            Рейтинг: <span className="font-semibold text-slate-900">{safeRating.toFixed(1)} / 5</span>
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            На основі оцінок: <span className="font-semibold text-slate-700">{safeRatingCount}</span>
           </p>
         </div>
       </div>

@@ -160,7 +160,6 @@ export const CandidateForm = ({
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div className="grid gap-6 md:grid-cols-2">
-        {/* ── Left column ── */}
         <div className="space-y-4">
       <label className="block space-y-1">
         <span className="text-sm text-slate-600">ПІБ кандидата</span>
@@ -249,7 +248,6 @@ export const CandidateForm = ({
       </label>
         </div>
 
-        {/* ── Right column ── */}
         <div className="space-y-4">
       <div className="space-y-2">
         <span className="text-sm text-slate-600">Навички</span>

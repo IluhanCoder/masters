@@ -18,7 +18,7 @@ export const LoginPage = () => {
     try {
       const result = await authService.login(payload)
       setSession(result)
-      void navigate('/candidates')
+      void navigate('/masters')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Помилка авторизації')
     } finally {
@@ -30,7 +30,7 @@ export const LoginPage = () => {
     <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.22),_transparent_40%),linear-gradient(145deg,_#f8fafc_0%,_#e2e8f0_100%)] px-6 py-10">
       <section className="w-full max-w-md space-y-5">
         <div className="rounded-3xl border border-white/70 bg-white/70 p-6 shadow-lg backdrop-blur">
-          <p className="text-sm uppercase tracking-[0.24em] text-slate-500">Recruiting Platform</p>
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500">Marketplace of Masters</p>
           <h1 className="mt-2 text-2xl font-semibold text-slate-950">Вхід у систему</h1>
           {error ? (
             <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

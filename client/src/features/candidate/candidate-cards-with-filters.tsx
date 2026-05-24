@@ -228,7 +228,7 @@ export const CandidateCardsWithFilters = ({
   if (isLoading) {
     return (
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm text-slate-500">Завантажуємо список кандидатів...</p>
+        <p className="text-sm text-slate-500">Завантажуємо картки майстрів...</p>
       </div>
     )
   }
@@ -247,22 +247,22 @@ export const CandidateCardsWithFilters = ({
       <aside className="w-64 shrink-0 space-y-4">
         {showCompanyFilter ? (
           <FilterCheckboxList
-            title="Компанії"
+            title="Клієнти"
             options={companies.map((c) => ({ value: c.id, label: c.name }))}
             selected={selectedCompanyIds}
             onToggle={toggleCompany}
-            emptyMessage="Немає компаній"
-            searchPlaceholder="Пошук компаній..."
+            emptyMessage="Немає клієнтів"
+            searchPlaceholder="Пошук клієнтів..."
           />
         ) : null}
 
         <FilterCheckboxList
-          title="Навички"
+          title="Категорії послуг"
           options={availableSkills.map((s) => ({ value: s, label: s }))}
           selected={selectedSkills}
           onToggle={toggleSkill}
           emptyMessage={showCompanyFilter && selectedCompanyIds.size === 0 ? 'Оберіть компанію' : 'Немає вимог до навичок'}
-          searchPlaceholder="Пошук навичок..."
+          searchPlaceholder="Пошук категорій..."
         />
 
         {showPositionFilter ? (
@@ -280,7 +280,7 @@ export const CandidateCardsWithFilters = ({
       <main className="flex-1">
         {filteredCandidates.length === 0 ? (
           <div className="rounded-2xl border border-white/70 bg-white/70 py-16 text-center shadow backdrop-blur">
-            <p className="text-slate-500">Жоден кандидат не відповідає обраним фільтрам</p>
+            <p className="text-slate-500">Жоден майстер не відповідає обраним категоріям</p>
           </div>
         ) : (
           <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -291,7 +291,7 @@ export const CandidateCardsWithFilters = ({
                 onCandidateClick={onCandidateClick}
                 footer={(
                   <>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Навички</p>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Послуги</p>
                     <div className="mb-3 flex flex-wrap gap-2">
                       {candidate.skills.map((skill) => (
                         <span
@@ -310,7 +310,7 @@ export const CandidateCardsWithFilters = ({
                     {showPositionFilter && matchedPositions.length ? (
                       <>
                         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-                          Рекомендований на посади
+                          Підходить для замовлень
                         </p>
                         <div className="flex flex-wrap gap-2">
                           {[...new Set(

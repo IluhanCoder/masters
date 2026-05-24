@@ -13,6 +13,10 @@ export interface CandidateBooking {
   weeklyHours: number
   comment?: string
   managerComment?: string
+  serviceRating?: number
+  serviceReview?: string
+  ratedAt?: Date
+  ratedBy?: Types.ObjectId
   status: CandidateBookingStatus
   createdBy: Types.ObjectId
   createdAt: Date
@@ -31,6 +35,10 @@ const bookingSchema = new Schema<CandidateBooking>(
     weeklyHours: { type: Number, required: true, min: 1, max: 168 },
     comment: { type: String, trim: true, maxlength: 2000 },
     managerComment: { type: String, trim: true, maxlength: 2000 },
+    serviceRating: { type: Number, min: 1, max: 5 },
+    serviceReview: { type: String, trim: true, maxlength: 2000 },
+    ratedAt: { type: Date },
+    ratedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     status: { type: String, enum: CANDIDATE_BOOKING_STATUSES, default: 'new' },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   },

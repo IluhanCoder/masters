@@ -26,6 +26,7 @@ app.use(express.json({ limit: '10mb' }))
 
 app.use('/api/auth', authRouter)
 app.use('/api/bookings', bookingRouter)
+app.use('/api/orders', bookingRouter)
 app.use('/api/users', userRouter)
 app.use('/api/companies', companyRouter)
 app.use('/api/chats', chatRouter)
@@ -33,6 +34,7 @@ app.use('/api/dashboard', dashboardRouter)
 app.use('/api/positions', positionRouter)
 app.use('/api/recommendations', recommendationRouter)
 app.use('/api/candidates', candidateRouter)
+app.use('/api/masters', candidateRouter)
 app.use('/api/skills', skillRouter)
 
 app.get('/health', (_request, response) => {
@@ -58,8 +60,8 @@ if (process.env.NODE_ENV !== 'production') {
 
 app.get('/', (_request, response) => {
   response.status(200).json({
-    service: 'recruiting-platform-api',
-    message: 'API scaffold for recruitment, staff leasing, and client requests is ready.',
+    service: 'masters-marketplace-api',
+    message: 'API for masters, client orders, and platform management is ready.',
   })
 })
 

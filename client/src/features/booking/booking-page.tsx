@@ -148,25 +148,25 @@ export const BookingPage = () => {
   }
 
   if (!candidateId) {
-    return <Navigate to="/candidates" replace />
+    return <Navigate to="/masters" replace />
   }
 
   if (role !== 'client') {
-    return <Navigate to={`/candidates/${candidateId}`} replace />
+    return <Navigate to={`/masters/${candidateId}`} replace />
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.22),_transparent_40%),linear-gradient(145deg,_#f8fafc_0%,_#e2e8f0_100%)] px-6 py-10">
+    <main className="marketplace-bg px-6 py-10">
       <section className="mx-auto max-w-4xl space-y-6">
         <AppNav
-          title={candidate ? `Бронювання: ${candidate.fullName}` : 'Бронювання кандидата'}
+          title={candidate ? `Нове замовлення: ${candidate.fullName}` : 'Нове замовлення'}
           actions={
             <button
               type="button"
-              onClick={() => void navigate(candidateId ? `/candidates/${candidateId}` : '/candidates')}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+              onClick={() => void navigate(candidateId ? `/masters/${candidateId}` : '/masters')}
+              className="rounded-xl border border-[#d9d3c5] bg-[#fffdf8] px-4 py-2 text-sm font-semibold text-[#5d5348] transition hover:bg-[#f7efdd]"
             >
-              Назад до кандидата
+              Назад до майстра
             </button>
           }
         />
@@ -186,9 +186,9 @@ export const BookingPage = () => {
         ) : candidate ? (
           <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
             <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-slate-900">Інформація про кандидата</h2>
+              <h2 className="text-lg font-semibold text-slate-900">Інформація про майстра</h2>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm text-slate-500">Кандидат</p>
+                <p className="text-sm text-slate-500">Майстер</p>
                 <p className="mt-1 text-lg font-semibold text-slate-900">{candidate.fullName}</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -200,14 +200,14 @@ export const BookingPage = () => {
                 <p className="mt-1 text-sm text-slate-900">{formatAvailabilityTerm(candidate)}</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm text-slate-500">Доступні посади для бронювання</p>
+                <p className="text-sm text-slate-500">Доступні категорії для замовлення</p>
                 <p className="mt-1 text-sm text-slate-900">{positions.length > 0 ? positions.length : 'Немає активних посад'}</p>
               </div>
             </section>
 
             <form onSubmit={handleSubmit} className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-slate-900">Форма бронювання</h2>
-              <p className="text-sm text-slate-500">Вкажіть період, робоче навантаження та коментар до бронювання.</p>
+              <h2 className="text-lg font-semibold text-slate-900">Форма замовлення</h2>
+              <p className="text-sm text-slate-500">Вкажіть період, навантаження та деталі замовлення для майстра.</p>
 
               <label className="block space-y-1">
                 <span className="text-sm text-slate-600">Посада</span>
@@ -219,7 +219,7 @@ export const BookingPage = () => {
                   disabled={isSubmitting || candidate.availability !== 'available' || positions.length === 0}
                 >
                   <option value="" disabled>
-                    {positions.length === 0 ? 'Немає доступних посад' : 'Оберіть посаду'}
+                    {positions.length === 0 ? 'Немає доступних категорій' : 'Оберіть категорію'}
                   </option>
                   {positions.map((position) => (
                     <option key={position.id} value={position.id}>
@@ -280,7 +280,7 @@ export const BookingPage = () => {
                   value={comment}
                   onChange={(event) => setComment(event.target.value)}
                   className="w-full rounded-xl border border-slate-300 px-4 py-2 outline-none ring-sky-300 transition focus:ring"
-                  placeholder="Опишіть деталі бронювання"
+                  placeholder="Опишіть деталі замовлення"
                   disabled={isSubmitting || candidate.availability !== 'available'}
                 />
               </label>
@@ -290,7 +290,7 @@ export const BookingPage = () => {
                 disabled={isSubmitting || candidate.availability !== 'available' || positions.length === 0}
                 className="w-full rounded-xl bg-slate-950 px-4 py-2 font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-500"
               >
-                {isSubmitting ? 'Створюємо бронювання...' : 'Забронювати кандидата'}
+                {isSubmitting ? 'Створюємо замовлення...' : 'Створити замовлення'}
               </button>
             </form>
           </div>

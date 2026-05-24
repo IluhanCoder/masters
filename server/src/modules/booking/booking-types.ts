@@ -10,6 +10,10 @@ export interface CandidateBookingSummary {
   weeklyHours: number
   comment?: string
   managerComment?: string
+  serviceRating?: number
+  serviceReview?: string
+  ratedAt?: Date
+  ratedById?: string
   status: BookingStatus
   createdById: string
 }
@@ -30,6 +34,10 @@ export interface CandidateBookingDetails {
   weeklyHours: number
   comment?: string
   managerComment?: string
+  serviceRating?: number
+  serviceReview?: string
+  ratedAt?: Date
+  ratedById?: string
   status: BookingStatus
   createdById: string
   createdAt: Date
@@ -52,4 +60,9 @@ export interface UpdateCandidateBookingRequestBody {
 
 export interface RespondToBookingRequestBody {
   action: 'accept' | 'reject'
+}
+
+export interface RateBookingRequestBody {
+  rating: number
+  review?: string
 }

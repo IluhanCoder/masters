@@ -6,6 +6,8 @@ export interface CandidateSummary {
   cvPdfDataUrl?: string
   completedHiresCompaniesCount: number
   skills: string[]
+  rating: number
+  ratingCount: number
   availability: 'available' | 'leased'
   availableFrom: Date
   availableTo?: Date
@@ -32,4 +34,8 @@ export interface UpdateCandidateRequestBody {
   availableFrom: string
   availableTo?: string
   isOpenEndedAvailability: boolean
+}
+
+export interface UpdateCandidateRatingRequestBody {
+  rating: number
 }

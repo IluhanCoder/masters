@@ -11,9 +11,30 @@ import type {
   CandidateBookingDetails,
   CandidateBookingSummary,
   CreateCandidateBookingRequestBody,
+  RateBookingRequestBody,
   RespondToBookingRequestBody,
   UpdateCandidateBookingRequestBody,
 } from './booking-types.js'
+
+const recomputeCandidateRating = async (candidateId: string) => {
+  const stats = await CandidateBookingModel.aggregate<{ _id: mongoose.Types.ObjectId; avg: number }>([
+    {
+      $match: {
+        candidateId: new mongoose.Types.ObjectId(candidateId),
+        serviceRating: { $exists: true, $ne: null },
+      },
+    },
+    {
+      $group: {
+        _id: '$candidateId',
+        avg: { $avg: '$serviceRating' },
+      },
+    },
+  ])
+
+  const nextRating = stats.length > 0 ? Math.round(stats[0].avg * 10) / 10 : 0
+  await CandidateModel.findByIdAndUpdate(candidateId, { rating: nextRating })
+}
 
 const toSummary = (
   booking: Awaited<ReturnType<(typeof CandidateBookingModel)['findOne']>>,
@@ -32,6 +53,10 @@ const toSummary = (
     weeklyHours: booking.weeklyHours,
     comment: booking.comment,
     managerComment: booking.managerComment,
+    serviceRating: booking.serviceRating,
+    serviceReview: booking.serviceReview,
+    ratedAt: booking.ratedAt,
+    ratedById: booking.ratedBy ? String(booking.ratedBy) : undefined,
     status: booking.status,
     createdById: String(booking.createdBy),
   }
@@ -112,6 +137,10 @@ async function _buildBookingDetails(
       weeklyHours: b.weeklyHours,
       comment: b.comment,
       managerComment: b.managerComment,
+      serviceRating: b.serviceRating,
+      serviceReview: b.serviceReview,
+      ratedAt: b.ratedAt,
+      ratedById: b.ratedBy ? String(b.ratedBy) : undefined,
       status: b.status,
       createdById: String(b.createdBy),
       createdAt: b.createdAt,
@@ -215,6 +244,45 @@ export const respondToBooking = async (
   }
 
   await booking.save()
+  return toSummary(booking)
+}
+
+export const rateBooking = async (
+  bookingId: string,
+  payload: RateBookingRequestBody,
+  authUser: AuthUser,
+): Promise<CandidateBookingSummary> => {
+  if (!bookingId || !mongoose.isValidObjectId(bookingId)) {
+    throw new HttpError(400, 'bookingId must be a valid object id')
+  }
+
+  const booking = await CandidateBookingModel.findOne({ _id: bookingId, createdBy: authUser.id })
+  if (!booking) {
+    throw new HttpError(404, 'Booking not found')
+  }
+
+  const now = new Date()
+  if (booking.status === 'approved' && booking.requestedTo.getTime() < now.getTime()) {
+    booking.status = 'completed'
+  }
+
+  if (booking.status !== 'completed') {
+    throw new HttpError(409, 'Only completed bookings can be rated')
+  }
+
+  const rating = Number(payload.rating)
+  if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+    throw new HttpError(400, 'rating must be between 1 and 5')
+  }
+
+  booking.serviceRating = Math.round(rating * 10) / 10
+  booking.serviceReview = payload.review?.trim() || undefined
+  booking.ratedAt = now
+  booking.ratedBy = new mongoose.Types.ObjectId(authUser.id)
+
+  await booking.save()
+  await recomputeCandidateRating(String(booking.candidateId))
+
   return toSummary(booking)
 }
 

@@ -2,12 +2,13 @@ import type {
   CandidateBookingDetails,
   CandidateBookingSummary,
   CreateCandidateBookingPayload,
+  RateBookingPayload,
   RespondToBookingPayload,
   UpdateBookingPayload,
 } from './booking-types'
 import { API_BASE } from '../../shared/api-base'
 
-const API_BASE_PATH = `${API_BASE}/api/bookings`
+const API_BASE_PATH = `${API_BASE}/api/orders`
 
 const parseError = async (response: Response): Promise<string> => {
   try {
@@ -53,7 +54,7 @@ export const bookingService = {
   },
 
   listByCandidate(candidateId: string, accessToken: string) {
-    return request<{ bookings: CandidateBookingDetails[] }>(`/by-candidate/${candidateId}`, accessToken, {
+    return request<{ bookings: CandidateBookingDetails[] }>(`/by-master/${candidateId}`, accessToken, {
       method: 'GET',
     })
   },
@@ -74,6 +75,13 @@ export const bookingService = {
 
   respond(bookingId: string, payload: RespondToBookingPayload, accessToken: string) {
     return request<{ booking: CandidateBookingSummary }>(`/${bookingId}/respond`, accessToken, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    })
+  },
+
+  rate(bookingId: string, payload: RateBookingPayload, accessToken: string) {
+    return request<{ booking: CandidateBookingSummary }>(`/${bookingId}/rate`, accessToken, {
       method: 'PATCH',
       body: JSON.stringify(payload),
     })

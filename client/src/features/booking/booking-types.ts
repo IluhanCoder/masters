@@ -19,6 +19,11 @@ export interface RespondToBookingPayload {
   action: 'accept' | 'reject'
 }
 
+export interface RateBookingPayload {
+  rating: number
+  review?: string
+}
+
 export interface CandidateBookingSummary {
   id: string
   candidateId: string
@@ -28,6 +33,10 @@ export interface CandidateBookingSummary {
   weeklyHours: number
   comment?: string
   managerComment?: string
+  serviceRating?: number
+  serviceReview?: string
+  ratedAt?: string
+  ratedById?: string
   status: BookingStatus
   createdById: string
 }
@@ -48,6 +57,10 @@ export interface CandidateBookingDetails {
   weeklyHours: number
   comment?: string
   managerComment?: string
+  serviceRating?: number
+  serviceReview?: string
+  ratedAt?: string
+  ratedById?: string
   status: BookingStatus
   createdById: string
   createdAt: string
