@@ -17,10 +17,12 @@ import { expireBookings } from './scheduler.js'
 
 export const app = express()
 
+const normalizeOrigin = (value: string): string => value.trim().replace(/\/+$/, '')
+
 const parseCsv = (value?: string): string[] =>
   (value ?? '')
     .split(',')
-    .map((item) => item.trim())
+    .map((item) => normalizeOrigin(item))
     .filter(Boolean)
 
 const allowedOriginSet = new Set<string>([
@@ -41,12 +43,14 @@ const corsOptions: cors.CorsOptions = {
       return
     }
 
-    if (allowedOriginSet.has(origin)) {
+    const normalizedOrigin = normalizeOrigin(origin)
+
+    if (allowedOriginSet.has(normalizedOrigin)) {
       callback(null, true)
       return
     }
 
-    callback(new Error(`CORS origin is not allowed: ${origin}`))
+    callback(new Error(`CORS origin is not allowed: ${normalizedOrigin}`))
   },
 }
 
