@@ -10,7 +10,7 @@ interface AuthContextValue {
   isInitializing: boolean
   setSession(data: AuthResponse): void
   clearSession(): void
-    apiFetch(input: string, init?: RequestInit): Promise<Response>
+  apiFetch(input: string, init?: RequestInit): Promise<Response>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -29,7 +29,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isInitializing, setIsInitializing] = useState<boolean>(() => loadStoredAuth() !== null)
 
   const authDataRef = useRef(authData)
+  const refreshInFlightRef = useRef<Promise<AuthResponse> | null>(null)
   authDataRef.current = authData
+
+  const parseAccessTokenExpiry = (accessToken: string): number | null => {
+    try {
+      const payloadPart = accessToken.split('.')[1]
+      if (!payloadPart) return null
+
+      const normalized = payloadPart.replace(/-/g, '+').replace(/_/g, '/')
+      const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')
+      const payload = JSON.parse(atob(padded)) as { exp?: number }
+
+      return typeof payload.exp === 'number' ? payload.exp : null
+    } catch {
+      return null
+    }
+  }
 
   const setSession = useCallback((data: AuthResponse) => {
     setAuthData(data)
@@ -40,8 +56,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const clearSession = useCallback(() => {
     setAuthData(null)
     authDataRef.current = null
+    refreshInFlightRef.current = null
     localStorage.removeItem(STORAGE_KEY)
   }, [])
+
+  const refreshSession = useCallback(async (refreshToken: string): Promise<AuthResponse> => {
+    const inFlight = refreshInFlightRef.current
+    if (inFlight) {
+      return inFlight
+    }
+
+    const request = authService
+      .refresh(refreshToken)
+      .then((nextSession) => {
+        setSession(nextSession)
+        return nextSession
+      })
+      .finally(() => {
+        refreshInFlightRef.current = null
+      })
+
+    refreshInFlightRef.current = request
+    return request
+  }, [setSession])
 
   useEffect(() => {
     const stored = loadStoredAuth()
@@ -57,8 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       })
       .catch(async () => {
         try {
-          const refreshed = await authService.refresh(stored.tokens.refreshToken)
-          setSession(refreshed)
+          await refreshSession(stored.tokens.refreshToken)
         } catch {
           clearSession()
         }
@@ -66,9 +102,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .finally(() => {
         setIsInitializing(false)
       })
-  }, [])
+  }, [clearSession, refreshSession])
 
-    const apiFetch = useCallback(async (input: string, init: RequestInit = {}): Promise<Response> => {
+  useEffect(() => {
+    if (!authData) {
+      return
+    }
+
+    const expiresAt = parseAccessTokenExpiry(authData.tokens.accessToken)
+    if (!expiresAt) {
+      return
+    }
+
+    const refreshAt = expiresAt * 1000 - 60_000
+    const delay = Math.max(refreshAt - Date.now(), 0)
+
+    const timeoutId = window.setTimeout(() => {
+      void refreshSession(authData.tokens.refreshToken).catch(() => {
+        clearSession()
+      })
+    }, delay)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [authData, clearSession, refreshSession])
+
+  const apiFetch = useCallback(async (input: string, init: RequestInit = {}): Promise<Response> => {
     const current = authDataRef.current
 
     const doFetch = (token: string) =>
@@ -88,14 +148,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (response.status !== 401) return response
 
     try {
-      const refreshed = await authService.refresh(current.tokens.refreshToken)
-      setSession(refreshed)
+      const refreshed = await refreshSession(current.tokens.refreshToken)
       return doFetch(refreshed.tokens.accessToken)
     } catch {
       clearSession()
       return response
     }
-  }, [setSession, clearSession])
+  }, [clearSession, refreshSession])
 
   return (
     <AuthContext.Provider value={{ authData, isInitializing, setSession, clearSession, apiFetch }}>
